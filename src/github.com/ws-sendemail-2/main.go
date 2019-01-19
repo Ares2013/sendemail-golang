@@ -5,11 +5,22 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/ws-sendemail-2/service"
 	"net/http"
-)
+	"os"
+		"fmt"
+	"time"
+	)
 
 const (
 	defaultPort = "8082"
 )
+// golang新版本的应该
+func PathExist(_path string) bool {
+	_, err := os.Stat(_path)
+	if err != nil && os.IsNotExist(err) {
+		return false
+	}
+	return true
+}
 
 // 中间件
 func Corsmiddleware() gin.HandlerFunc {
@@ -30,9 +41,37 @@ func Corsmiddleware() gin.HandlerFunc {
 }
 
 func main() {
+	// Disable Console Color, you don't need console color when writing the logs to file.
+	gin.DisableConsoleColor()
+	//gin.SetMode(gin.ReleaseMode)
+	//gin.DefaultWriter = ioutil.Discard
+	// _time := time.Now().String()
+	// PathExist(_time)
+	// Logging to a file.
+	//f, _ := os.Create("gin.log")
+	//gin.DefaultWriter = io.MultiWriter(f)
+
 	router := gin.Default()
 	router.Use(gzip.Gzip(gzip.DefaultCompression))
 	router.Use(Corsmiddleware())
+	// LoggerWithFormatter middleware will write the logs to gin.DefaultWriter
+	// By default gin.DefaultWriter = os.Stdout
+	router.Use(gin.LoggerWithFormatter(func(param gin.LogFormatterParams) string {
+
+		// your custom format
+		return fmt.Sprintf("%s - [%s] \"%s %s %s %d %s \"%s\" %s\"\n",
+			param.ClientIP,
+			param.TimeStamp.Format(time.RFC1123),
+			param.Method,
+			param.Path,
+			param.Request.Proto,
+			param.StatusCode,
+			param.Latency,
+			param.Request.UserAgent(),
+			param.ErrorMessage,
+		)
+	}))
+	router.Use(gin.Recovery())
 	router.GET("/ping", service.Ping)
 	router.GET("/", service.Ping)
 

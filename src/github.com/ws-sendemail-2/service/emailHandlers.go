@@ -3,9 +3,9 @@ package service
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/ws-sendemail-2/defs"
-	"log"
-	"net/http"
+		"net/http"
 	"time"
+	"log"
 )
 
 /**
@@ -30,15 +30,14 @@ import (
 **/
 func SendEmailsV1(c *gin.Context) {
 	var Email = defs.Email{}
-	if c.ShouldBind(&Email) == nil {
+	if err := c.ShouldBind(&Email); err != nil {
+		log.Println(c.ShouldBind(&Email))
 		c.JSON(http.StatusBadRequest, gin.H{
 			"code":      http.StatusBadRequest,
 			"msg":       "error",
 			"timestamp": time.Now(),
 		})
 		return
-	} else {
-		log.Println(c.ClientIP())
 	}
 	if _, err := CheckEmail(&Email); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -52,14 +51,12 @@ func SendEmailsV1(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"code":      http.StatusOK,
 			"msg":       "success",
-			"timestamp": time.Now(),
 			"sid":       sid,
 		})
 	} else {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"code":      http.StatusBadRequest,
 			"msg":       "db error",
-			"timestamp": time.Now(),
 		})
 		return
 	}
